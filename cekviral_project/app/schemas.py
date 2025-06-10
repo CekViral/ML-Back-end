@@ -1,14 +1,14 @@
 # cekviral_project/app/schemas.py
 from pydantic import BaseModel, Field
 
-# File ini akan berisi semua model data (skema) Pydantic Anda.
+# File ini akan berisi semua model data (skema) Pydantic.
 # Ini membantu menghindari circular imports.
 
 class ContentInput(BaseModel):
     content: str = Field(..., description="Konten yang akan diverifikasi, bisa berupa teks murni atau URL.")
 
 class PredictionProbabilities(BaseModel):
-    HOAX: float = Field(..., description="Probabilitas konten sebagai HOAX.")
+    HOAKS: float = Field(..., description="Probabilitas konten sebagai HOAKS.")
     FAKTA: float = Field(..., description="Probabilitas konten sebagai FAKTA.")
 
 class MLPredictionOutput(BaseModel):
