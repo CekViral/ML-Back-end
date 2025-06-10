@@ -17,31 +17,6 @@ from app.services.database import save_verification_result
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# # --- Definisi Pydantic Models (tetap sama) ---
-
-# class ContentInput(BaseModel):
-#     content: str = Field(..., description="Konten yang akan diverifikasi, bisa berupa teks murni atau URL.")
-
-# class PredictionProbabilities(BaseModel):
-#     HOAX: float = Field(..., description="Probabilitas konten sebagai HOAX.")
-#     FAKTA: float = Field(..., description="Probabilitas konten sebagai FAKTA.")
-
-# class MLPredictionOutput(BaseModel):
-#     status: str = Field(..., description="Status hasil prediksi ML (e.g., 'success', 'error').")
-#     message: str = Field(..., description="Pesan terkait hasil prediksi ML.")
-#     probabilities: PredictionProbabilities = Field(..., description="Probabilitas untuk setiap kelas (HOAX/FAKTA).")
-#     predicted_label_model: str = Field(..., description="Label prediksi asli dari model (sebelum penerapan threshold).")
-#     highest_confidence: float = Field(..., description="Nilai kepercayaan tertinggi dari prediksi model.")
-#     final_label_thresholded: str = Field(..., description="Label final setelah penerapan threshold (HOAX, FAKTA, atau BELUM DIVERIFIKASI).")
-#     inference_time_ms: float = Field(..., description="Waktu inferensi model dalam milidetik.")
-
-# class VerificationResult(BaseModel):
-#     original_input: str = Field(..., description="Input asli yang diberikan oleh pengguna.")
-#     input_type: str = Field(..., description="Tipe input (e.g., 'text', 'url').")
-#     processed_text: str | None = Field(None, description="Teks yang telah diekstrak atau ditranskripsi untuk analisis, jika ada.")
-#     prediction: MLPredictionOutput = Field(..., description="Detail hasil prediksi dari model ML.")
-#     processing_message: str = Field(..., description="Pesan umum terkait status pemrosesan konten.")
-
 # --- Router Endpoint ---
 
 @router.post("/verify", response_model=VerificationResult)
@@ -104,7 +79,6 @@ async def verify_content(input_data: ContentInput):
                 logger.error(f"Error extracting article from {user_input}: {e}", exc_info=True)
 
         elif url_type == "unsupported_social":
-            # --- PERUBAHAN PESAN ---
             processing_message = "Maaf, input yang Anda berikan tidak valid atau merupakan jenis konten yang belum kami dukung untuk verifikasi."
             logger.warning(f"Unsupported social media link detected: {user_input}")
         
@@ -113,7 +87,6 @@ async def verify_content(input_data: ContentInput):
             logger.warning(f"Academic site link detected: {user_input}")
             
         else: # Mencakup 'unknown' atau jenis URL lain yang tidak ditangani
-            # --- PERUBAHAN PESAN (SESUAI PERMINTAAN ANDA) ---
             processing_message = "Maaf, input yang Anda berikan tidak valid atau merupakan jenis konten yang belum kami dukung untuk verifikasi."
             logger.warning(f"Unknown or invalid URL type: {user_input}")
 
@@ -132,7 +105,6 @@ async def verify_content(input_data: ContentInput):
         
         if ml_output.get("status") == "success":
             prediction_details = MLPredictionOutput(**ml_output)
-            # Update pesan sukses jika sebelumnya hanya pesan umum
             if "berhasil" in processing_message:
                 processing_message += " Verifikasi oleh model ML selesai."
             else:
