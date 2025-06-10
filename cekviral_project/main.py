@@ -99,8 +99,12 @@ async def root():
     """Endpoint root untuk mengecek status API."""
     return {"message": f"Selamat datang di {settings.PROJECT_NAME} v{settings.PROJECT_VERSION}. Kunjungi /docs untuk dokumentasi API."}
 
-# Blok ini memungkinkan Anda menjalankan aplikasi langsung dengan 'python main.py'
+# Blok ini memungkinkan untuk menjalankan aplikasi langsung dengan 'python main.py'
 if __name__ == "__main__":
-    # '--reload' akan membuat server otomatis restart saat ada perubahan kode.
-    # Jangan gunakan '--reload' di production.
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Baca port dari environment variable 'PORT' yang diberikan oleh Cloud Run.
+    # Jika tidak ada (misalnya saat development lokal), gunakan port 8000 sebagai default.
+    port = int(os.environ.get("PORT", 8000))
+    
+    # Jalankan Uvicorn dari dalam Python.
+    # --reload=True dihapus karena tidak boleh digunakan di production.
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
