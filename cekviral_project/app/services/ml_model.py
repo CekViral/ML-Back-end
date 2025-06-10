@@ -7,14 +7,6 @@ import time
 
 # Import library NLTK, TensorFlow, dan Transformers
 import nltk
-# try:
-#     nltk.data.find('tokenizers/punkt_tab')
-# except nltk.downloader.DownloadError:
-#     nltk.download('punkt_tab')
-# try:
-#     nltk.data.find('corpora/stopwords')
-# except nltk.downloader.DownloadError:
-#     nltk.download('stopwords')
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import tensorflow as tf
@@ -27,7 +19,7 @@ logger = logging.getLogger(__name__)
 global_model = None
 global_tokenizer = None
 
-# --- KAMUS SLANGWORDS ANDA ---
+# --- KAMUS SLANGWORDS ---
 slangwords = {"@": "di", "abis": "habis", "wtb": "beli", "masi": "masih", "wts": "jual", "wtt": "tukar", "bgt": "banget", "maks": "maksimal",
               "plisss": "tolong", "bgttt": "banget", "indo": "indonesia", "bgtt": "banget", "ad": "ada", "rv": "redvelvet", "plis": "tolong",
               "pls": "tolong", "cr": "sumber", "cod": "bayar ditempat", "adlh": "adalah", "afaik": "as far as i know", "ahaha": "haha", "aj": "saja",
@@ -90,7 +82,7 @@ slangwords = {"@": "di", "abis": "habis", "wtb": "beli", "masi": "masih", "wts":
 # --- AKHIR KAMUS SLANGWORDS ---
 
 
-# --- FUNGSI PREPROCESSING TEKS ANDA ---
+# --- FUNGSI PREPROCESSING TEKS ---
 def cleaningText(text):
     text = re.sub(r'@[A-Za-z0-9_]+', '', text)
     text = re.sub(r'#\w+', '', text)
@@ -161,7 +153,7 @@ def preprocess_text_for_ml(text: str) -> str:
     tokens = filteringText(tokens)
     text = toSentence(tokens)
     return text
-# --- AKHIR FUNGSI PREPROCESSING TEKS ANDA ---
+# --- AKHIR FUNGSI PREPROCESSING TEKS ---
 
 
 # Konfigurasi model dan tokenizer
@@ -170,7 +162,7 @@ MAX_SEQUENCE_LENGTH = 128
 FINE_TUNED_MODEL_DIR = "indobert_savedmodel" # Nama folder SavedModel
 
 # Mapping label untuk klasifikasi biner
-CLASS_LABELS = {0: "HOAX", 1: "FAKTA"}
+CLASS_LABELS = {0: "HOAKS", 1: "FAKTA"}
 
 # Threshold untuk zona "BELUM DIVERIFIKASI" (pada probabilitas kelas FAKTA)
 UNCERTAIN_THRESHOLD_LOW = 0.15
@@ -222,7 +214,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         return {
             "status": "error",
             "message": "Model/Tokenizer belum dimuat.",
-            "probabilities": {"HOAX": 0.0, "FAKTA": 0.0},
+            "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
             "predicted_label_model": "N/A",
             "highest_confidence": 0.0,
             "final_label_thresholded": "BELUM DIVERIFIKASI",
@@ -231,7 +223,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
 
     start_time = time.perf_counter()
 
-    # 1. Pra-pemrosesan Teks (fungsi custom Anda, sekarang lebih robust)
+    # 1. Pra-pemrosesan Teks
     processed_text = preprocess_text_for_ml(raw_text)
     
     # Cek apakah setelah preprocessing teks menjadi kosong
@@ -240,7 +232,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         return {
             "status": "error",
             "message": "Teks setelah pra-pemrosesan kosong. Tidak ada konten untuk diverifikasi.",
-            "probabilities": {"HOAX": 0.0, "FAKTA": 0.0},
+            "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
             "predicted_label_model": "N/A",
             "highest_confidence": 0.0,
             "final_label_thresholded": "BELUM DIVERIFIKASI",
@@ -269,7 +261,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
             return {
                 "status": "error",
                 "message": f"Tokenisasi menghasilkan ID ({token_id}) di luar batas kosakata model ({VOCAB_LIMIT_MODEL}). Mohon pastikan model dan tokenizer sesuai.",
-                "probabilities": {"HOAX": 0.0, "FAKTA": 0.0},
+                "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
                 "predicted_label_model": "N/A",
                 "highest_confidence": 0.0,
                 "final_label_thresholded": "BELUM DIVERIFIKASI",
@@ -280,7 +272,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
     model_input = {
         'input_ids': encoded_input['input_ids'],
         'attention_mask': encoded_input['attention_mask'],
-        'token_type_ids': encoded_input['token_type_ids'] # Ini harus ada
+        'token_type_ids': encoded_input['token_type_ids']
     }
     logger.info(f"Input model (keys): {model_input.keys()}")
     logger.info(f"Input model (shape input_ids): {model_input['input_ids'].shape}")
@@ -302,7 +294,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
             return {
                 "status": "error",
                 "message": "Format output model tidak dikenal.",
-                "probabilities": {"HOAX": 0.0, "FAKTA": 0.0},
+                "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
                 "predicted_label_model": "N/A",
                 "highest_confidence": 0.0,
                 "final_label_thresholded": "BELUM DIVERIFIKASI",
@@ -319,7 +311,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         predicted_label = CLASS_LABELS.get(predicted_class_index, "tidak diketahui")
         
         # Probabilitas untuk setiap label
-        prob_hoax = probabilities_array[0] # Asumsi indeks 0 untuk HOAX
+        prob_hoax = probabilities_array[0] # Asumsi indeks 0 untuk HOAKS
         prob_fakta = probabilities_array[1] # Asumsi indeks 1 untuk FAKTA
 
         # Confidence tertinggi
@@ -330,7 +322,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         if prob_fakta >= UNCERTAIN_THRESHOLD_HIGH:
             final_label_thresholded = "FAKTA"
         elif prob_fakta <= UNCERTAIN_THRESHOLD_LOW: # Jika prob fakta rendah (maka prob hoax tinggi)
-            final_label_thresholded = "HOAX"
+            final_label_thresholded = "HOAKS"
         
         end_time = time.perf_counter()
         inference_time_ms = (end_time - start_time) * 1000
@@ -346,7 +338,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
             "status": "success",
             "message": "Prediksi berhasil.",
             "probabilities": {
-                "HOAX": float(prob_hoax),
+                "HOAKS": float(prob_hoax),
                 "FAKTA": float(prob_fakta)
             },
             "predicted_label_model": predicted_label,
@@ -360,7 +352,7 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         return {
             "status": "error",
             "message": f"Kesalahan prediksi model: {str(e)}",
-            "probabilities": {"HOAX": 0.0, "FAKTA": 0.0}, # Pastikan default ini lengkap
+            "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
             "predicted_label_model": "N/A",
             "highest_confidence": 0.0,
             "final_label_thresholded": "BELUM DIVERIFIKASI",
