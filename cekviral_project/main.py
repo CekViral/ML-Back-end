@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # ----------------- SETUP AWAL & KONFIGURASI -----------------
 
 # 1. Tambahkan direktori root proyek ke sys.path
-# Ini membantu Python menemukan modul di folder 'app' Anda.
+# Ini membantu Python menemukan modul di folder 'app'.
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
@@ -25,8 +25,8 @@ from app.core.config import settings
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# 5. Atur environment variable untuk Google Cloud Credentials (JIKA ANDA MENGGUNAKAN GCP API)
-# Ini langkah kunci agar library Google Cloud bisa menemukan file kunci JSON Anda secara otomatis.
+# 5. Atur environment variable untuk Google Cloud Credentials
+# Ini langkah kunci agar library Google Cloud bisa menemukan file kunci JSON secara otomatis.
 # Pastikan Anda sudah membuat file .env dan mengisi GCP_CREDENTIALS_PATH="gcp-credentials.json"
 if settings.GCP_CREDENTIALS_PATH:
     # Buat path absolut dari path relatif di .env
@@ -68,12 +68,12 @@ async def startup_event():
     import nltk
     try:
         # Cek apakah resource yang dibutuhkan sudah ada
-        nltk.data.find('tokenizers/punkt')
+        nltk.data.find('tokenizers/punkt_tab')
         nltk.data.find('corpora/stopwords')
         logger.info("Data NLTK sudah tersedia.")
     except nltk.downloader.DownloadError:
         logger.warning("Data NLTK tidak ditemukan. Mengunduh...")
-        nltk.download('punkt')
+        nltk.download('punkt_tab')
         nltk.download('stopwords')
         logger.info("Data NLTK berhasil diunduh.")
 
@@ -99,12 +99,9 @@ async def root():
     """Endpoint root untuk mengecek status API."""
     return {"message": f"Selamat datang di {settings.PROJECT_NAME} v{settings.PROJECT_VERSION}. Kunjungi /docs untuk dokumentasi API."}
 
-# Blok ini memungkinkan untuk menjalankan aplikasi langsung dengan 'python main.py'
+# ----------------- EKSEKUSI LANGSUNG -----------------
 if __name__ == "__main__":
-    # Baca port dari environment variable 'PORT' yang diberikan oleh Cloud Run.
-    # Jika tidak ada (misalnya saat development lokal), gunakan port 8000 sebagai default.
-    port = int(os.environ.get("PORT", 8000))
-    
-    # Jalankan Uvicorn dari dalam Python.
-    # --reload=True dihapus karena tidak boleh digunakan di production.
+    import uvicorn
+
+    port = int(os.getenv("PORT", 8080))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
