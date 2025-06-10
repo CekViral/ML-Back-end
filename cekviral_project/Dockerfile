@@ -27,8 +27,9 @@ RUN python -m nltk.downloader punkt_tab stopwords
 COPY . .
 #    Ini akan menyalin main.py, folder app/, folder models/, dll.
 
-# 9. Tentukan port yang akan di-expose oleh kontainer
-EXPOSE 8000
+# 9. Expose port 8080 sesuai default Cloud Run
+EXPOSE 8080
 
-# 10. Perintah untuk menjalankan aplikasi FastAPI Anda
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 10. Jalankan aplikasi melalui file main.py, bukan uvicorn langsung
+# Ini akan membuat logika di dalam 'if __name__ == "__main__":' di main.py berjalan
+CMD ["python", "main.py"]
