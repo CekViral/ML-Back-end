@@ -31,7 +31,7 @@ async def save_verification_result(result: VerificationResult, user_id: str | No
         data_to_insert = {
             "original_input":        result.original_input,
             "processed_text":        result.processed_text,
-            "prob_hoax":             result.prediction.probabilities.HOAX,
+            "prob_hoax":             result.prediction.probabilities.HOAKS,
             "prob_fakta":            result.prediction.probabilities.FAKTA,
             "final_label_threshold": result.prediction.final_label_thresholded,
             "inference_time_ms":     result.prediction.inference_time_ms,
