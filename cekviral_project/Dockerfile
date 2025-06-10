@@ -21,15 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 7. Download NLTK data saat build image
 RUN python -m nltk.downloader punkt_tab stopwords 
-#   (Pastikan 'punkt_tab' adalah yang benar, atau ganti dengan 'punkt' jika lebih umum)
 
-# 8. Salin semua file dan folder dari direktori proyek Anda ke working directory di kontainer
+# 8. Salin semua file dan folder dari direktori proyek ke working directory di kontainer
 COPY . .
-#    Ini akan menyalin main.py, folder app/, folder models/, dll.
 
-# 9. Expose port 8080 sesuai default Cloud Run
-EXPOSE 8080
-
-# 10. Jalankan aplikasi melalui file main.py, bukan uvicorn langsung
-# Ini akan membuat logika di dalam 'if __name__ == "__main__":' di main.py berjalan
+# 9. Jalankan aplikasi melalui file main.py, bukan uvicorn langsung
 CMD ["python", "main.py"]
