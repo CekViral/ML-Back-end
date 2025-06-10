@@ -12,8 +12,8 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Ganti dengan nama bucket GCS yang sudah Anda buat
-GCS_BUCKET_NAME = "cekviral-audio-uploads"  # <-- GANTI DENGAN NAMA BUCKET ANDA
+# Ganti dengan nama bucket GCS yang sudah dibuat
+GCS_BUCKET_NAME = "cekviral-audio-uploads"
 
 # --- FUNGSI EKSTRAKSI TEKS DARI HTML (MENGGUNAKAN BEAUTIFULSOUP) ---
 def extract_text_from_html(html_content: str) -> str | None:
