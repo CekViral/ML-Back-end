@@ -159,7 +159,7 @@ def preprocess_text_for_ml(text: str) -> str:
 # Konfigurasi model dan tokenizer
 INDOBERT_TOKENIZER_NAME = "indobenchmark/indobert-lite-base-p2"
 MAX_SEQUENCE_LENGTH = 128
-FINE_TUNED_MODEL_DIR = "indobert_savedmodel" # Nama folder SavedModel
+FINE_TUNED_MODEL_FILE = "indobert_model.tflite"
 
 # Mapping label untuk klasifikasi biner
 CLASS_LABELS = {0: "HOAKS", 1: "FAKTA"}
@@ -168,179 +168,110 @@ CLASS_LABELS = {0: "HOAKS", 1: "FAKTA"}
 UNCERTAIN_THRESHOLD_LOW = 0.15
 UNCERTAIN_THRESHOLD_HIGH = 0.85
 
-
 def load_ml_model():
-    """
-    Memuat model fine-tuned IndoBERT (SavedModel) dan tokenizer-nya.
-    Fungsi ini harus dipanggil sekali saat aplikasi startup.
-    """
-    global global_model, global_tokenizer
+    """Memuat model TFLite dan tokenizer-nya."""
+    global global_interpreter, global_tokenizer
 
-    # Path lengkap ke folder SavedModel
-    model_saved_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'models', FINE_TUNED_MODEL_DIR)
+    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'models', FINE_TUNED_MODEL_FILE)
     
     try:
-        logger.info(f"Memuat model fine-tuned dari: {model_saved_path}")
-        loaded_model = tf.saved_model.load(model_saved_path)
-        
-        global_model = loaded_model 
-        logger.info("Model IndoBERT fine-tuned (SavedModel langsung) berhasil dimuat.")
+        logger.info(f"Memuat model TFLite dari: {model_path}")
+        global_interpreter = tf.lite.Interpreter(model_path=model_path)
+        global_interpreter.allocate_tensors()
+        logger.info("Model TFLite berhasil dimuat.")
         
         logger.info(f"Memuat tokenizer: {INDOBERT_TOKENIZER_NAME}")
         global_tokenizer = BertTokenizer.from_pretrained(INDOBERT_TOKENIZER_NAME)
-        
-        # --- PENAMBAHAN DIAGNOSTIK BARU: LOG UKURAN KOSAKATA TOKENIZER ---
-        # Ini akan mencetak ukuran kosakata tokenizer ke log.
-        logger.info(f"Tokenizer vocabulary size: {len(global_tokenizer.vocab)}")
-        # --- AKHIR PENAMBAHAN DIAGNOSTIK ---
-
-        logger.info("Tokenizer Hugging Face IndoBERT berhasil dimuat.")
+        logger.info("Tokenizer Hugging Face berhasil dimuat.")
 
     except Exception as e:
-        logger.error(f"Terjadi kesalahan saat memuat model atau tokenizer: {e}", exc_info=True)
-        global_model = None
+        logger.error(f"Terjadi kesalahan saat memuat model TFLite atau tokenizer: {e}", exc_info=True)
+        global_interpreter = None
         global_tokenizer = None
 
 
 def predict_content_hoax_status(raw_text: str) -> dict:
     """
-    Melakukan prediksi menggunakan model IndoBERT fine-tuned setelah pra-pemrosesan teks.
-    Mengembalikan dictionary yang berisi detail prediksi.
+    Melakukan prediksi menggunakan model TFLite yang sudah dioptimalkan.
     """
-    global global_model, global_tokenizer
+    global global_interpreter, global_tokenizer
 
-    if global_model is None or global_tokenizer is None:
-        logger.error("Model atau Tokenizer belum dimuat. Tidak dapat melakukan prediksi.")
+    if global_interpreter is None or global_tokenizer is None:
+        logger.error("Interpreter TFLite atau Tokenizer belum dimuat. Tidak dapat melakukan prediksi.")
         return {
             "status": "error",
-            "message": "Model/Tokenizer belum dimuat.",
+            "message": "Model/Tokenizer tidak dimuat.",
             "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
             "predicted_label_model": "N/A",
             "highest_confidence": 0.0,
             "final_label_thresholded": "BELUM DIVERIFIKASI",
-            "inference_time_ms": 0
+            "inference_time_ms": 0.0
         }
 
     start_time = time.perf_counter()
-
-    # 1. Pra-pemrosesan Teks
-    processed_text = preprocess_text_for_ml(raw_text)
     
-    # Cek apakah setelah preprocessing teks menjadi kosong
-    if not processed_text.strip():
-        logger.warning("Teks setelah pra-pemrosesan kosong atau hanya spasi. Tidak dapat melakukan prediksi.")
-        return {
-            "status": "error",
-            "message": "Teks setelah pra-pemrosesan kosong. Tidak ada konten untuk diverifikasi.",
-            "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
-            "predicted_label_model": "N/A",
-            "highest_confidence": 0.0,
-            "final_label_thresholded": "BELUM DIVERIFIKASI",
-            "inference_time_ms": 0
-        }
-
-    logger.info(f"Teks setelah pra-pemrosesan: {processed_text[:100]}...")
-
-    # 2. Tokenisasi menggunakan AutoTokenizer
-    encoded_input = global_tokenizer(
-        processed_text,
-        truncation=True,
-        padding='max_length',
-        max_length=MAX_SEQUENCE_LENGTH,
-        return_tensors='tf' # Penting: return_tensors='tf' untuk TensorFlow
-    )
-    
-    # --- PENAMBAHAN SAFEGUARD BARU: PERIKSA TOKEN ID DI LUAR BATAS KOSAKATA ---
-    # Ini adalah langkah diagnostik untuk mengonfirmasi sumber masalah `INVALID_ARGUMENT`.
-    # Jika model Anda memiliki batas yang berbeda, sesuaikan `VOCAB_LIMIT_MODEL` ini.
-    VOCAB_LIMIT_MODEL = len(global_tokenizer.vocab) 
-    logger.debug(f"Menggunakan VOCAB_LIMIT_MODEL dinamis: {VOCAB_LIMIT_MODEL}")
-    for token_id in encoded_input['input_ids'].numpy()[0]:
-        if token_id >= VOCAB_LIMIT_MODEL or token_id < 0: # Periksa terhadap ukuran vocab aktual
-            logger.error(f"Out-of-vocabulary token ID terdeteksi: {token_id} di input. Kosakata model yang dimuat memiliki ukuran: {VOCAB_LIMIT_MODEL}. Pastikan tokenizer dan model konsisten.")
-            return {
-                "status": "error",
-                "message": f"Tokenisasi menghasilkan ID ({token_id}) di luar batas kosakata model ({VOCAB_LIMIT_MODEL}). Mohon pastikan model dan tokenizer sesuai.",
-                "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
-                "predicted_label_model": "N/A",
-                "highest_confidence": 0.0,
-                "final_label_thresholded": "BELUM DIVERIFIKASI",
-                "inference_time_ms": 0
-            }
-    # --- AKHIR PENAMBAHAN SAFEGUARD ---
-
-    model_input = {
-        'input_ids': encoded_input['input_ids'],
-        'attention_mask': encoded_input['attention_mask'],
-        'token_type_ids': encoded_input['token_type_ids']
-    }
-    logger.info(f"Input model (keys): {model_input.keys()}")
-    logger.info(f"Input model (shape input_ids): {model_input['input_ids'].shape}")
-
-    # 3. Prediksi Model
     try:
-        # Panggil model yang dimuat langsung dengan dictionary input.
-        predictions_output = global_model(model_input)
+        processed_text = preprocess_text_for_ml(raw_text)
         
-        # SavedModel yang berasal dari TFAutoModelForSequenceClassification
-        # biasanya mengembalikan dictionary dengan kunci 'logits'.
-        if isinstance(predictions_output, dict) and 'logits' in predictions_output:
-            logits = predictions_output['logits']
-        elif tf.is_tensor(predictions_output): # Fallback jika langsung mengembalikan tensor
-            logits = predictions_output
-        else:
-            logger.error(f"Unexpected model output type: {type(predictions_output)}")
-            logger.error(f"Predictions output content: {predictions_output}")
+        if not processed_text.strip():
+            logger.warning("Teks setelah pra-pemrosesan kosong atau hanya spasi.")
             return {
-                "status": "error",
-                "message": "Format output model tidak dikenal.",
+                "status": "error", "message": "Teks setelah pra-pemrosesan kosong.",
                 "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
-                "predicted_label_model": "N/A",
-                "highest_confidence": 0.0,
-                "final_label_thresholded": "BELUM DIVERIFIKASI",
-                "inference_time_ms": 0
+                "predicted_label_model": "N/A", "highest_confidence": 0.0,
+                "final_label_thresholded": "BELUM DIVERIFIKASI", "inference_time_ms": 0.0
             }
-            
-        # Mengonversi logits ke probabilitas (softmax)
-        probabilities_array = tf.nn.softmax(logits, axis=1).numpy()[0] # Ambil array probabilitas untuk satu sampel
+
+        logger.info(f"Teks setelah pra-pemrosesan: {processed_text[:100]}...")
+
+        encoded_input = global_tokenizer(
+            processed_text,
+            truncation=True,
+            padding='max_length',
+            max_length=MAX_SEQUENCE_LENGTH,
+            return_tensors='tf'
+        )
         
-        # Mendapatkan indeks kelas dengan probabilitas tertinggi
+        input_details = global_interpreter.get_input_details()
+        output_details = global_interpreter.get_output_details()
+
+        input_ids = tf.cast(encoded_input['input_ids'], dtype=input_details[0]['dtype'])
+        attention_mask = tf.cast(encoded_input['attention_mask'], dtype=input_details[1]['dtype'])
+        
+        global_interpreter.set_tensor(input_details[0]['index'], input_ids)
+        global_interpreter.set_tensor(input_details[1]['index'], attention_mask)
+        if len(input_details) > 2:
+            token_type_ids = tf.cast(encoded_input['token_type_ids'], dtype=input_details[2]['dtype'])
+            global_interpreter.set_tensor(input_details[2]['index'], token_type_ids)
+
+        global_interpreter.invoke()
+        logits = global_interpreter.get_tensor(output_details[0]['index'])
+        
+        probabilities_array = tf.nn.softmax(logits, axis=1).numpy()[0]
+        
+        # Perhatikan CLASS_LABELS: jika key 0 adalah HOAKS, maka prob_hoax adalah probabilities_array[0]
+        prob_hoax = float(probabilities_array[0])
+        prob_fakta = float(probabilities_array[1])
         predicted_class_index = np.argmax(probabilities_array)
-        
-        # Konversi Indeks Kelas ke Label Asli menggunakan CLASS_LABELS
         predicted_label = CLASS_LABELS.get(predicted_class_index, "tidak diketahui")
         
-        # Probabilitas untuk setiap label
-        prob_hoax = probabilities_array[0] # Asumsi indeks 0 untuk HOAKS
-        prob_fakta = probabilities_array[1] # Asumsi indeks 1 untuk FAKTA
-
-        # Confidence tertinggi
         highest_confidence = float(np.max(probabilities_array))
 
-        # Tentukan label final berdasarkan threshold
         final_label_thresholded = "BELUM DIVERIFIKASI"
         if prob_fakta >= UNCERTAIN_THRESHOLD_HIGH:
             final_label_thresholded = "FAKTA"
-        elif prob_fakta <= UNCERTAIN_THRESHOLD_LOW: # Jika prob fakta rendah (maka prob hoax tinggi)
+        elif prob_fakta <= UNCERTAIN_THRESHOLD_LOW:
             final_label_thresholded = "HOAKS"
         
-        end_time = time.perf_counter()
-        inference_time_ms = (end_time - start_time) * 1000
+        inference_time_ms = (time.perf_counter() - start_time) * 1000
 
-        logger.info(f"Raw predictions (logits): {logits.numpy()}")
-        logger.info(f"Probabilities: {probabilities_array}")
-        logger.info(f"Predicted class index by model: {predicted_class_index}")
-        logger.info(f"Predicted label by model: {predicted_label}")
-        logger.info(f"Final label (thresholded): {final_label_thresholded}")
-        logger.info(f"Inference Time: {inference_time_ms:.2f} ms")
+        logger.info(f"Probabilities: HOAKS={prob_hoax:.4f}, FAKTA={prob_fakta:.4f}")
+        logger.info(f"Predicted label by model: {predicted_label}, Final (thresholded): {final_label_thresholded}")
         
         return {
             "status": "success",
             "message": "Prediksi berhasil.",
-            "probabilities": {
-                "HOAKS": float(prob_hoax),
-                "FAKTA": float(prob_fakta)
-            },
+            "probabilities": {"HOAKS": prob_hoax, "FAKTA": prob_fakta},
             "predicted_label_model": predicted_label,
             "highest_confidence": highest_confidence,
             "final_label_thresholded": final_label_thresholded,
@@ -348,13 +279,10 @@ def predict_content_hoax_status(raw_text: str) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Error saat melakukan prediksi model: {e}", exc_info=True)
+        logger.error(f"Error saat melakukan prediksi: {e}", exc_info=True)
         return {
-            "status": "error",
-            "message": f"Kesalahan prediksi model: {str(e)}",
+            "status": "error", "message": f"Kesalahan internal saat prediksi: {str(e)}",
             "probabilities": {"HOAKS": 0.0, "FAKTA": 0.0},
-            "predicted_label_model": "N/A",
-            "highest_confidence": 0.0,
-            "final_label_thresholded": "BELUM DIVERIFIKASI",
-            "inference_time_ms": 0
+            "predicted_label_model": "N/A", "highest_confidence": 0.0,
+            "final_label_thresholded": "BELUM DIVERIFIKASI", "inference_time_ms": 0.0
         }
