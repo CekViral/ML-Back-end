@@ -29,7 +29,7 @@ async def verify_content(input_data: ContentInput):
     default_ml_output = MLPredictionOutput(
         status="error",
         message="Tidak ada teks yang dapat diproses atau diverifikasi oleh model ML.",
-        probabilities={"HOAX": 0.0, "FAKTA": 0.0},
+        probabilities={"HOAKS": 0.0, "FAKTA": 0.0},
         predicted_label_model="N/A",
         highest_confidence=0.0,
         final_label_thresholded="BELUM DIVERIFIKASI",
