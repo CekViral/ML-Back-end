@@ -3,7 +3,7 @@ import logging
 from supabase import create_client, Client
 from app.core.config import settings
 
-# --- PERUBAHAN UTAMA #2: Impor dari file schemas.py ---
+# --- Impor dari file schemas.py ---
 from app.schemas import VerificationResult # Impor dari file baru
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ async def save_verification_result(result: VerificationResult, user_id: str | No
         }
 
         logger.info(f"Menyimpan hasil verifikasi ke Supabase: {data_to_insert}")
-        # Ganti 'history' dengan nama tabel Anda jika berbeda
+        # Ganti 'history' dengan nama tabel yang sesuai jika berbeda
         response = supabase.table("history").insert(data_to_insert).execute()
         
         logger.info("Data berhasil disimpan ke Supabase.")
