@@ -5,11 +5,12 @@ import logging
 from fastapi import FastAPI
 import uvicorn
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 # ----------------- SETUP AWAL & KONFIGURASI -----------------
 
 # 1. Tambahkan direktori root proyek ke sys.path
-# Ini membantu Python menemukan modul di folder 'app'.
+# Ini membantu Python menemukan modul di folder 'app'.  
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
@@ -51,6 +52,14 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.PROJECT_VERSION,
     description="CekViral: Asisten Cerdas untuk Verifikasi Konten Viral"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"], # Izinkan semua metode (GET, POST, dll.)
+    allow_headers=["*"], # Izinkan semua header
 )
 
 # ----------------- EVENT HANDLERS (Fungsi saat Startup & Shutdown) -----------------
