@@ -118,6 +118,21 @@ async def verify_content(input_data: ContentInput):
         if processing_message.startswith("Konten sedang diproses"):
              processing_message = "Tidak ada teks yang dapat diekstrak atau diproses dari input."
 
+    # Bangun objek result sementara (tanpa history_id yang valid)
+    temp_result = VerificationResult(
+        original_input=user_input,
+        input_type=input_type,
+        processed_text=processed_text or "",
+        prediction=prediction_details,
+        processing_message=processing_message,
+        history_id="temp"  # Placeholder
+    )
+    
+    # Simpan ke Supabase, dapatkan ID-nya
+    history_id = await save_verification_result(result=temp_result)
+    if history_id is None:
+        history_id = "unsaved"
+
     # Buat objek hasil akhir
     final_result = VerificationResult(
         original_input=user_input,
@@ -125,7 +140,7 @@ async def verify_content(input_data: ContentInput):
         processed_text=processed_text or "",
         prediction=prediction_details,
         processing_message=processing_message,
-        history_id=None
+        history_id=history_id
     )
 
     # Simpan hasil ke database di background tanpa menunda respons ke pengguna.
