@@ -1,6 +1,6 @@
 # cekviral_project/app/api/endpoints.py
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from typing import Optional
 import logging
@@ -23,10 +23,6 @@ async def verify_content(
     input_data: ContentInput,
     user_id: Optional[str] = Depends(get_current_user)
 ):
-    if not user_id:
-        logger.warning("Akses ditolak: pengguna tidak terautentikasi.")
-        raise HTTPException(status_code=401, detail="Akses ditolak. Silakan login untuk menggunakan layanan ini.")
-
     user_input = input_data.content.strip()
     processed_text: Optional[str] = None
     input_type = "text"
@@ -112,7 +108,6 @@ async def verify_content(
             processing_message += " Verifikasi oleh model ML selesai."
         else:
             processing_message = f"Verifikasi ML gagal: {ml_output.get('message', 'Terjadi kesalahan.')}"
-
     elif processing_message.startswith("Konten sedang diproses"):
         processing_message = "Tidak ada teks yang dapat diekstrak atau diproses dari input."
 
@@ -125,8 +120,9 @@ async def verify_content(
         history_id="unsaved"
     )
 
-    # Simpan hasil ke database
-    history_id = await save_verification_result(result=final_result, user_id=user_id)
-    final_result.history_id = history_id or "unsaved"
+    # Simpan hasil ke database hanya jika user login
+    if user_id:
+        history_id = await save_verification_result(result=final_result, user_id=user_id)
+        final_result.history_id = history_id or "unsaved"
 
     return final_result
