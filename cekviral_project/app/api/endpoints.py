@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from typing import Optional
 import logging
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @router.post("/verify", response_model=VerificationResult)
 async def verify_content(
     input_data: ContentInput,
+    request: Request,
     user_id: Optional[str] = Depends(get_current_user)
 ):
     user_input = input_data.content.strip()
@@ -103,9 +104,12 @@ async def verify_content(
         history_id="unsaved"
     )
 
-    # Simpan hanya jika user login
+    # Simpan ke Supabase hanya jika user login
     if user_id:
+        logger.info(f"Penyimpanan ke Supabase untuk user_id: {user_id}")
         history_id = await save_verification_result(result=final_result, user_id=user_id)
         final_result.history_id = history_id or "unsaved"
+    else:
+        logger.info("User belum login. Hasil tidak disimpan.")
 
     return final_result
