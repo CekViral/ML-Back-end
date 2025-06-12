@@ -118,36 +118,18 @@ async def verify_content(input_data: ContentInput):
         if processing_message.startswith("Konten sedang diproses"):
              processing_message = "Tidak ada teks yang dapat diekstrak atau diproses dari input."
 
-    # Bangun objek result sementara (tanpa history_id yang valid)
-    temp_result = VerificationResult(
-        original_input=user_input,
-        input_type=input_type,
-        processed_text=processed_text or "",
-        prediction=prediction_details,
-        processing_message=processing_message,
-        history_id="temp"  # Placeholder
-    )
-    
-    # Simpan ke Supabase, dapatkan ID-nya
-    history_id = await save_verification_result(result=temp_result)
-    if history_id is None:
-        history_id = "unsaved"
-
-    # Buat objek hasil akhir
+     # --- Bangun dan Simpan Final Result ---
     final_result = VerificationResult(
         original_input=user_input,
         input_type=input_type,
         processed_text=processed_text or "",
         prediction=prediction_details,
         processing_message=processing_message,
-        history_id=history_id
+        history_id="temp"
     )
 
-    # Simpan hasil ke database di background tanpa menunda respons ke pengguna.
-    # user_id diatur ke None untuk saat ini.
-    try:
-        asyncio.create_task(save_verification_result(final_result, user_id=None))
-    except Exception as e:
-        logger.error(f"Gagal membuat task untuk menyimpan ke database: {e}")
+    # Simpan ke Supabase
+    history_id = await save_verification_result(result=final_result)
+    final_result.history_id = history_id or "unsaved"
 
     return final_result
