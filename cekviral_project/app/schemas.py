@@ -25,4 +25,5 @@ class VerificationResult(BaseModel):
     input_type: str
     processed_text: str | None
     prediction: MLPredictionOutput
-    processing_message: str
+    processing_message: str | None
+    history_id: str

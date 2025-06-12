@@ -4,7 +4,7 @@ from supabase import create_client, Client
 from app.core.config import settings
 
 # --- Impor dari file schemas.py ---
-from app.schemas import VerificationResult # Impor dari file baru
+from app.schemas import VerificationResult
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +19,13 @@ if settings.SUPABASE_URL and settings.SUPABASE_KEY:
 else:
     logger.warning("SUPABASE_URL atau SUPABASE_KEY tidak ditemukan. Fitur database tidak akan aktif.")
 
-async def save_verification_result(result: VerificationResult, user_id: str | None = None):
+async def save_verification_result(result: VerificationResult, user_id: str | None = None) -> str | None:
     """
-    Menyimpan hasil verifikasi lengkap ke dalam tabel 'history' di Supabase.
+    Menyimpan hasil verifikasi lengkap ke dalam tabel 'history' di Supabase dan mengembalikan ID-nya.
     """
     if not supabase:
         logger.warning("Klien Supabase tidak tersedia. Melewatkan penyimpanan ke database.")
-        return
+        return None
 
     try:
         data_to_insert = {
@@ -40,10 +40,16 @@ async def save_verification_result(result: VerificationResult, user_id: str | No
         }
 
         logger.info(f"Menyimpan hasil verifikasi ke Supabase: {data_to_insert}")
-        # Ganti 'history' dengan nama tabel yang sesuai jika berbeda
         response = supabase.table("history").insert(data_to_insert).execute()
-        
-        logger.info("Data berhasil disimpan ke Supabase.")
+
+        if response.data and len(response.data) > 0:
+            history_id = response.data[0].get("id")
+            logger.info(f"Data berhasil disimpan ke Supabase dengan ID: {history_id}")
+            return history_id
+        else:
+            logger.warning("Data berhasil disimpan tetapi tidak ada ID yang dikembalikan.")
+            return None
 
     except Exception as e:
         logger.error(f"Gagal menyimpan data ke Supabase: {e}", exc_info=True)
+        return None
