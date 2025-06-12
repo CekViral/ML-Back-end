@@ -5,7 +5,7 @@ env/
 __pycache__/
 *.pyc
 *.log
-# .env  # Aktifkan jika .env Anda berisi rahasia
+.env
 .git/
 .gitignore
 .vscode/
