@@ -21,7 +21,7 @@ else:
 
 async def save_verification_result(result: VerificationResult, user_id: str | None = None) -> str | None:
     """
-    Menyimpan hasil verifikasi lengkap ke dalam tabel 'history' di Supabase dan mengembalikan ID-nya.
+    Menyimpan hasil verifikasi ke dalam tabel 'history' di Supabase. Jika user login, simpan juga user_id.
     """
     if not supabase:
         logger.warning("Klien Supabase tidak tersedia. Melewatkan penyimpanan ke database.")
@@ -36,8 +36,10 @@ async def save_verification_result(result: VerificationResult, user_id: str | No
             "final_label_threshold": result.prediction.final_label_thresholded,
             "inference_time_ms":     result.prediction.inference_time_ms,
             "predicted_label":       result.prediction.predicted_label_model,
-            "user_id":               user_id
         }
+
+        if user_id:
+            data_to_insert["user_id"] = user_id  # hanya ditambahkan jika user login
 
         logger.info(f"Menyimpan hasil verifikasi ke Supabase: {data_to_insert}")
         response = supabase.table("history").insert(data_to_insert, returning="representation").execute()
