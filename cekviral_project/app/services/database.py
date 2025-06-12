@@ -40,7 +40,7 @@ async def save_verification_result(result: VerificationResult, user_id: str | No
         }
 
         logger.info(f"Menyimpan hasil verifikasi ke Supabase: {data_to_insert}")
-        response = supabase.table("history").insert(data_to_insert).execute()
+        response = supabase.table("history").insert(data_to_insert, returning="representation").execute()
 
         if response.data and len(response.data) > 0:
             history_id = response.data[0].get("id")
