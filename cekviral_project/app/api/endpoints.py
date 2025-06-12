@@ -19,9 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/verify", response_model=VerificationResult)
-async def verify_content(input_data: ContentInput):
+async def verify_content(
+    input_data: ContentInput,
+    user_id: Optional[str] = Depends(get_current_user)
+):
     user_input = input_data.content.strip()
-    user_id = input_data.user_id
     processed_text: Optional[str] = None
     input_type = "text"
     processing_message = "Konten sedang diproses..."
@@ -118,7 +120,7 @@ async def verify_content(input_data: ContentInput):
         history_id="unsaved"
     )
 
-    # Simpan hasil jika user login (user_id tersedia)
+    # Simpan hasil jika user login
     if user_id:
         history_id = await save_verification_result(result=final_result, user_id=user_id)
         final_result.history_id = history_id or "unsaved"
