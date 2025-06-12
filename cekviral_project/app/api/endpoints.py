@@ -124,7 +124,8 @@ async def verify_content(input_data: ContentInput):
         input_type=input_type,
         processed_text=processed_text or "",
         prediction=prediction_details,
-        processing_message=processing_message
+        processing_message=processing_message,
+        history_id=None
     )
 
     # Simpan hasil ke database di background tanpa menunda respons ke pengguna.
