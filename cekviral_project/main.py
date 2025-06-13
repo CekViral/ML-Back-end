@@ -56,7 +56,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],
+    allow_origins=["https://cek-viral-try.vercel.app/"],
     allow_credentials=True,
     allow_methods=["*"], # Izinkan semua metode (GET, POST, dll.)
     allow_headers=["*"], # Izinkan semua header
