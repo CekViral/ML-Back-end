@@ -1,0 +1,22 @@
+{
+    "sourceFile": "models/schemas.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1748705318597,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748706325381,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,4 +1,4 @@\n from pydantic import BaseModel\r\n \r\n class Pertanyaan(BaseModel):\r\n-    question: str\n\\ No newline at end of file\n+    pertanyaan: str\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1748705318597,
+            "name": "Commit-0",
+            "content": "from pydantic import BaseModel\r\n\r\nclass Pertanyaan(BaseModel):\r\n    question: str"
+        }
+    ]
+}

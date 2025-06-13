@@ -1,0 +1,26 @@
+{
+    "sourceFile": "dockerfile",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 2,
+            "patches": [
+                {
+                    "date": 1749192246124,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1749221930346,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,14 +1,23 @@\n+# Gunakan image yang ringan\r\n FROM python:3.12-slim\r\n \r\n-ENV PYTHONDONTWRITEBYTECODE=1\r\n-ENV PYTHONUNBUFFERED=1\r\n-ENV PORT=8080\r\n+# Tambahkan dependencies sistem (buat psycopg2 & bcrypt work)\r\n+RUN apt-get update && apt-get install -y \\\r\n+    gcc \\\r\n+    libpq-dev \\\r\n+    && rm -rf /var/lib/apt/lists/*\r\n \r\n+# Set working directory\r\n WORKDIR /app\r\n\\ No newline at end of file\n-COPY requirements.txt /app/\r\n-RUN pip install --no-cache-dir -r requirements.txt\r\n \r\n-COPY . /app\r\n-EXPOSE 8080\r\n+# Copy requirements dulu (agar cache pip bisa dipakai)\r\n+COPY requirements.txt .\r\n \r\n-CMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8080\"]\n+# Install dependencies Python\r\n+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt\r\n+\r\n+# Copy semua source code ke dalam container\r\n+COPY . .\r\n+\r\n+# Jalankan server\r\n+CMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\r\n"
+                },
+                {
+                    "date": 1749340998401,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -19,5 +19,5 @@\n # Copy semua source code ke dalam container\r\n COPY . .\r\n \r\n # Jalankan server\r\n-CMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\n\\ No newline at end of file\n+CMD [\"sh\", \"-c\", \"uvicorn main:app --host 0.0.0.0 --port=${PORT:-8000}\"]\n\\ No newline at end of file\n"
+                }
+            ],
+            "date": 1749192246124,
+            "name": "Commit-0",
+            "content": "FROM python:3.12-slim\r\n\r\nENV PYTHONDONTWRITEBYTECODE=1\r\nENV PYTHONUNBUFFERED=1\r\nENV PORT=8080\r\n\r\nWORKDIR /app\r\nCOPY requirements.txt /app/\r\nRUN pip install --no-cache-dir -r requirements.txt\r\n\r\nCOPY . /app\r\nEXPOSE 8080\r\n\r\nCMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8080\"]"
+        }
+    ]
+}

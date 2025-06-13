@@ -1,0 +1,22 @@
+{
+    "sourceFile": ".dockerignore",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1749221932695,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1749228658335,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -1,10 +1,13 @@\n-.venv\r\n __pycache__/\r\n *.pyc\r\n *.pyo\r\n *.pyd\r\n *.db\r\n+*.sqlite3\r\n *.log\r\n-*.sqlite3\r\n+*.csv\r\n\\ No newline at end of file\n+*.tsv\r\n+*.xlsx\r\n+*.json\r\n+venv/\r\n .env\r\n-.git\n"
+                }
+            ],
+            "date": 1749221932695,
+            "name": "Commit-0",
+            "content": ".venv\r\n__pycache__/\r\n*.pyc\r\n*.pyo\r\n*.pyd\r\n*.db\r\n*.log\r\n*.sqlite3\r\n.env\r\n.git"
+        }
+    ]
+}

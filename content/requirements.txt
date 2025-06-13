@@ -1,0 +1,9 @@
+fastapi
+psycopg2-binary
+sentence-transformers
+google-generativeai
+pgvector
+python-dotenv
+pydantic[email]
+uvicorn[standard]
+python-jose

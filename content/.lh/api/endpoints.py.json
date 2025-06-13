@@ -1,0 +1,58 @@
+{
+    "sourceFile": "api/endpoints.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 10,
+            "patches": [
+                {
+                    "date": 1748704786549,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1748704802147,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -28,4 +28,13 @@\n         rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n+\r\n+class QueryInput(BaseModel):\r\n+    question: str\r\n+\r\n+@router.post(\"/ask\")\r\n+def ask_question(payload: QueryInput):\r\n+    question = payload.question\r\n+    # logika RAG kamu di sini...\r\n+    return {\"jawaban\": f\"Ini hasil dari: {question}\"}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1748705080558,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -28,13 +28,4 @@\n         rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n-\r\n-class QueryInput(BaseModel):\r\n-    question: str\r\n-\r\n-@router.post(\"/ask\")\r\n-def ask_question(payload: QueryInput):\r\n-    question = payload.question\r\n-    # logika RAG kamu di sini...\r\n-    return {\"jawaban\": f\"Ini hasil dari: {question}\"}\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1748706327428,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -28,4 +28,13 @@\n         rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n+\r\n+@router.post(\"/ask\")\r\n+def ask_question(data: Pertanyaan):\r\n+    conn = get_db_connection()\r\n+    try:\r\n+        result = rag_pipeline(data.pertanyaan, conn)\r\n+        return {\"jawaban\": result}\r\n+    finally:\r\n+        conn.close()\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1748706757049,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n from pydantic import BaseModel\r\n from models.schemas import Pertanyaan\r\n from core.database import get_db\r\n from core.embedding import embed_query\r\n-from core.rag_utils import search_similar_docs, generate_answer\r\n+from core.rag_utils import search_similar_docs, generate_answer, rag_pipeline\r\n \r\n router = APIRouter()\r\n \r\n @router.post(\"/cek-hoaks\")\r\n@@ -31,9 +31,9 @@\n         raise HTTPException(status_code=500, detail=str(e))\r\n \r\n @router.post(\"/ask\")\r\n def ask_question(data: Pertanyaan):\r\n-    conn = get_db_connection()\r\n+    conn = get_db()\r\n     try:\r\n         result = rag_pipeline(data.pertanyaan, conn)\r\n         return {\"jawaban\": result}\r\n     finally:\r\n"
+                },
+                {
+                    "date": 1748707135483,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -30,11 +30,10 @@\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n \r\n @router.post(\"/ask\")\r\n-def ask_question(data: Pertanyaan):\r\n-    conn = get_db()\r\n+def ask_question(input: Pertanyaan, conn=Depends(get_db)):\r\n     try:\r\n-        result = rag_pipeline(data.pertanyaan, conn)\r\n+        result = rag_pipeline(input.pertanyaan, conn)\r\n         return {\"jawaban\": result}\r\n\\ No newline at end of file\n-    finally:\r\n-        conn.close()\n+    except Exception as e:\r\n+        raise HTTPException(status_code=500, detail=str(e))\r\n"
+                },
+                {
+                    "date": 1748707420995,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -28,12 +28,4 @@\n         rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n-\r\n-@router.post(\"/ask\")\r\n-def ask_question(input: Pertanyaan, conn=Depends(get_db)):\r\n-    try:\r\n-        result = rag_pipeline(input.pertanyaan, conn)\r\n-        return {\"jawaban\": result}\r\n-    except Exception as e:\r\n-        raise HTTPException(status_code=500, detail=str(e))\n\\ No newline at end of file\n"
+                },
+                {
+                    "date": 1748707438696,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n from pydantic import BaseModel\r\n from models.schemas import Pertanyaan\r\n from core.database import get_db\r\n from core.embedding import embed_query\r\n-from core.rag_utils import search_similar_docs, generate_answer, rag_pipeline\r\n+from core.rag_utils import search_similar_docs, generate_answer\r\n \r\n router = APIRouter()\r\n \r\n @router.post(\"/cek-hoaks\")\r\n"
+                },
+                {
+                    "date": 1748708530868,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -2,9 +2,9 @@\n from pydantic import BaseModel\r\n from models.schemas import Pertanyaan\r\n from core.database import get_db\r\n from core.embedding import embed_query\r\n-from core.rag_utils import search_similar_docs, generate_answer\r\n+from core.rag_utils import search_docs_for_rag, search_docs_for_rekomendasi, generate_answer\r\n \r\n router = APIRouter()\r\n \r\n @router.post(\"/cek-hoaks\")\r\n"
+                },
+                {
+                    "date": 1748708619589,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -4,18 +4,17 @@\n from core.database import get_db\r\n from core.embedding import embed_query\r\n from core.rag_utils import search_docs_for_rag, search_docs_for_rekomendasi, generate_answer\r\n \r\n+\r\n router = APIRouter()\r\n \r\n @router.post(\"/cek-hoaks\")\r\n def cek_hoaks(input: Pertanyaan, conn=Depends(get_db)):\r\n     try:\r\n         query_vec = embed_query(input.pertanyaan)\r\n-        docs = search_similar_docs(conn, query_vec, top_k=5)\r\n-        if not docs:\r\n-            return {\"jawaban\": \"Maaf, tidak ditemukan informasi relevan.\"}\r\n-        context = \"\\n\\n\".join([f\"- {title}\\n{desc}\" for title, desc in docs])\r\n+        docs = search_docs_for_rag(conn, query_vec, top_k=5)\r\n+        context = \"\\n\\n\".join([f\"[{status}] {title}\\n{desc}\" for status, title, desc in docs])\r\n         answer = generate_answer(context, input.pertanyaan)\r\n         return {\"jawaban\": answer}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n@@ -23,9 +22,9 @@\n @router.post(\"/rekomendasi-konten\")\r\n def rekomendasi_konten(input: Pertanyaan, conn=Depends(get_db)):\r\n     try:\r\n         query_vec = embed_query(input.pertanyaan)\r\n-        docs = search_similar_docs(conn, query_vec, top_k=8)\r\n-        rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n+        docs = search_docs_for_rekomendasi(conn, query_vec, top_k=8)\r\n+        rekomendasi = [{\"title\": title, \"link\": link, \"image\": img} for title, link, img in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n"
+                },
+                {
+                    "date": 1748708647506,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -23,8 +23,8 @@\n def rekomendasi_konten(input: Pertanyaan, conn=Depends(get_db)):\r\n     try:\r\n         query_vec = embed_query(input.pertanyaan)\r\n         docs = search_docs_for_rekomendasi(conn, query_vec, top_k=8)\r\n-        rekomendasi = [{\"title\": title, \"link\": link, \"image\": img} for title, link, img in docs]\r\n+        rekomendasi = [{\"title\": title, \"link\": link, \"imageurl\": img} for title, link, img in docs]\r\n         return {\"rekomendasi\": rekomendasi}\r\n     except Exception as e:\r\n         raise HTTPException(status_code=500, detail=str(e))\r\n"
+                }
+            ],
+            "date": 1748704786549,
+            "name": "Commit-0",
+            "content": "from fastapi import APIRouter, Depends, HTTPException\r\nfrom pydantic import BaseModel\r\nfrom models.schemas import Pertanyaan\r\nfrom core.database import get_db\r\nfrom core.embedding import embed_query\r\nfrom core.rag_utils import search_similar_docs, generate_answer\r\n\r\nrouter = APIRouter()\r\n\r\n@router.post(\"/cek-hoaks\")\r\ndef cek_hoaks(input: Pertanyaan, conn=Depends(get_db)):\r\n    try:\r\n        query_vec = embed_query(input.pertanyaan)\r\n        docs = search_similar_docs(conn, query_vec, top_k=5)\r\n        if not docs:\r\n            return {\"jawaban\": \"Maaf, tidak ditemukan informasi relevan.\"}\r\n        context = \"\\n\\n\".join([f\"- {title}\\n{desc}\" for title, desc in docs])\r\n        answer = generate_answer(context, input.pertanyaan)\r\n        return {\"jawaban\": answer}\r\n    except Exception as e:\r\n        raise HTTPException(status_code=500, detail=str(e))\r\n\r\n@router.post(\"/rekomendasi-konten\")\r\ndef rekomendasi_konten(input: Pertanyaan, conn=Depends(get_db)):\r\n    try:\r\n        query_vec = embed_query(input.pertanyaan)\r\n        docs = search_similar_docs(conn, query_vec, top_k=8)\r\n        rekomendasi = [{\"title\": title, \"deskripsi\": desc} for title, desc in docs]\r\n        return {\"rekomendasi\": rekomendasi}\r\n    except Exception as e:\r\n        raise HTTPException(status_code=500, detail=str(e))\r\n"
+        }
+    ]
+}

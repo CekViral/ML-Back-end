@@ -1,0 +1,49 @@
+# Python bytecode & caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environments
+env/
+venv/
+.venv/
+**/venv/
+**/.venv/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+
+# Secrets & configuration
+.env
+.env.*
+**/.env
+*.env.yaml
+.env.yaml
+
+# Logs & runtime files
+*.log
+*.pid
+*.sock
+
+# Databases / local state
+*.sqlite3
+*.db
+
+# Editor/IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Docker cache
+**/.docker
+
+# Git placeholder files (optional)
+.gitkeep
