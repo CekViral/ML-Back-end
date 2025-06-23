@@ -35,7 +35,7 @@ docker login
 ### A. Set Shell Variables
 Ganti nilainya sesuai dengan proyek dan akun Docker Hub Anda.
 
-#### --- GANTI NILAI DI BAWAH INI ---
+#### GANTI NILAI DI BAWAH INI
 ```
 export DOCKER_USERNAME="[YOUR_DOCKER_HUB_USERNAME]"
 export SERVICE_NAME="your-service" # Sesuaikan dengan nama repo di Docker Hub
@@ -44,7 +44,7 @@ export TAG="latest" # atau v1.0.1
 export PROJECT_ID="[YOUR_PROJECT_ID]" # Untuk gcloud
 export REGION="asia-southeast2"      # Untuk gcloud
 ```
-#### --- Variabel di bawah ini akan otomatis terisi ---
+#### INI AKAN OTOMATIS TERISI
 ```
 export IMAGE_NAME="${DOCKER_USERNAME}/${SERVICE_NAME}:${TAG}"
 ```
