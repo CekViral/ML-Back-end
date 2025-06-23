@@ -1,75 +1,77 @@
-# Deployment ke Google Cloud Run via Docker Hub
+# Deployment to Google Cloud Run via Docker Hub
 
-Dokumen ini menjelaskan langkah-langkah untuk melakukan deployment layanan ini ke Google Cloud Run menggunakan Docker Hub sebagai container registry.
+This document outlines the steps to deploy this service to Google Cloud Run using Docker Hub as the container registry.
 
 ---
-## 1. Prasyarat (Prerequisites)
+## 1. Prerequisites
 
 - Google Cloud SDK (`gcloud` CLI)
 - Docker
-- Akun Docker Hub dengan sebuah repository yang sudah dibuat.
+- A Docker Hub account with an existing repository
 
 ---
-## 2. Konfigurasi Awal (One-Time Setup)
+## 2. One-Time Setup
 
-### A. Login ke Akun Google Cloud
-Diperlukan untuk perintah `gcloud run deploy`
+### A. Log In to Google Cloud Account  
+Required for the `gcloud run deploy` command
 ```
 gcloud auth login
 ```
 
-### B. Set Project ID Aktif
+### B. Set Active Project ID
 ```
 gcloud config set project [YOUR_PROJECT_ID]
 ```
 
-### C. Login ke Docker Hub
-Diperlukan untuk perintah `docker push`
+### C. Log In to Docker Hub  
+Required for the `docker push` command
 ```
 docker login
 ```
 
 ---
-## 3. Proses Deployment Manual
+## 3. Manual Deployment Process
 
-### A. Set Shell Variables
-Ganti nilainya sesuai dengan proyek dan akun Docker Hub Anda.
+### A. Set Shell Variables  
+Replace the values according to your project and Docker Hub account.
 
-#### GANTI NILAI DI BAWAH INI
+#### REPLACE THE VALUES BELOW
 ```
 export DOCKER_USERNAME="[YOUR_DOCKER_HUB_USERNAME]"
-export SERVICE_NAME="your-service" # Sesuaikan dengan nama repo di Docker Hub
-export TAG="latest" # atau v1.0.1
+export SERVICE_NAME="your-service" # Match your Docker Hub repo name
+export TAG="latest" # or v1.0.1
 
-export PROJECT_ID="[YOUR_PROJECT_ID]" # Untuk gcloud
-export REGION="asia-southeast2"      # Untuk gcloud
+export PROJECT_ID="[YOUR_PROJECT_ID]" # For gcloud
+export REGION="asia-southeast2"       # For gcloud
 ```
-#### INI AKAN OTOMATIS TERISI
+
+#### THIS WILL BE AUTOMATICALLY FILLED
 ```
 export IMAGE_NAME="${DOCKER_USERNAME}/${SERVICE_NAME}:${TAG}"
 ```
 
-### B. Build Docker Image
+### B. Build the Docker Image
 ```
 docker build -t $IMAGE_NAME .
 ```
 
-### C. Push Image ke Docker Hub
+### C. Push Image to Docker Hub
 ```
 docker push $IMAGE_NAME
 ```
 
-### D. Deploy ke Cloud Run
-Perhatikan bahwa `--image` sekarang menunjuk ke image di Docker Hub.
+### D. Deploy to Cloud Run  
+Note that `--image` now points to the image on Docker Hub.
 ```
 gcloud run deploy $SERVICE_NAME --image $IMAGE_NAME --platform managed --region $REGION --allow-unauthenticated --port 8080 --memory 2Gi --cpu 1 --min-instances 0 --max-instances 10 --concurrency 80 --timeout 300s --env-vars-file .env.yaml
 ```
 
 ---
-## 4. Contoh File `.env.yaml`
-Pastikan file `.env.yaml` Anda mengikuti format berikut. **JANGAN masukkan file ini ke Git jika berisi rahasia!** Gunakan `.gitignore`.
+## 4. Sample `.env.yaml` File  
+Make sure your `.env.yaml` file follows the format below. **DO NOT commit this file to Git if it contains secrets!** Use `.gitignore`.
 
 ```yaml
-# Format: KEY: "VALUE" (nilai dalam tanda kutip)
+# Format: KEY: "VALUE" (values in quotation marks)
 DATABASE_URL: "your-database-connection-string"
 API_KEY: "your-secret-api-key"
+```
