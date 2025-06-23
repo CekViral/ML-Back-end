@@ -32,7 +32,7 @@ docker login
 ---
 ## 3. Proses Deployment Manual
 
-### a. Set Shell Variables
+### A. Set Shell Variables
 Ganti nilainya sesuai dengan proyek dan akun Docker Hub Anda.
 
 #### --- GANTI NILAI DI BAWAH INI ---
@@ -49,17 +49,17 @@ export REGION="asia-southeast2"      # Untuk gcloud
 export IMAGE_NAME="${DOCKER_USERNAME}/${SERVICE_NAME}:${TAG}"
 ```
 
-### b. Build Docker Image
+### B. Build Docker Image
 ```
 docker build -t $IMAGE_NAME .
 ```
 
-### c. Push Image ke Docker Hub
+### C. Push Image ke Docker Hub
 ```
 docker push $IMAGE_NAME
 ```
 
-### d. Deploy ke Cloud Run
+### D. Deploy ke Cloud Run
 Perhatikan bahwa `--image` sekarang menunjuk ke image di Docker Hub.
 ```
 gcloud run deploy $SERVICE_NAME --image $IMAGE_NAME --platform managed --region $REGION --allow-unauthenticated --port 8080 --memory 2Gi --cpu 1 --min-instances 0 --max-instances 10 --concurrency 80 --timeout 300s --env-vars-file .env.yaml
