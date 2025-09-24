@@ -1,0 +1,8 @@
+# File environment yang berisi rahasia
+.env
+
+# Folder cache dan lainnya
+service_account.json
+
+# Abaikan folder cache dari ekstensi VS Code Local History
+**/.lh/
